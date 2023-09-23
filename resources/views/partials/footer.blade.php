@@ -101,76 +101,6 @@ var slides = [];
 var swiper;
 
 function updateSlides() {
-    if (window.innerWidth <= 768) {
-        // Mobile slides
-        slides = [{
-                image: 'images/home/slider/slidem1.jpg',
-                alt: 'Mobile Slide 1',
-                link: 'https://printo.ae/categories/print-products'
-            },
-            {
-                image: 'images/home/slider/slidem2.jpg',
-                alt: 'Mobile Slide 1',
-                link: 'https://printo.ae/categories/print-products'
-            },
-            {
-                image: 'images/home/slider/slidem3.jpg',
-                alt: 'Mobile Slide 1',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slidem4.jpg',
-                alt: 'Mobile Slide 1',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slidem5.jpg',
-                alt: 'Mobile Slide 1',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slidem6.jpg',
-                alt: 'Mobile Slide 1',
-                link: '#'
-            },
-            // Add more mobile slides as needed
-        ];
-    } else {
-        // Desktop slides
-        slides = [{
-                image: 'images/home/slider/slide1.jpg',
-                alt: 'Desktop Slide 1',
-                link: 'https://printo.ae/categories/print-products'
-            },
-            {
-                image: 'images/home/slider/slide2.jpg',
-                alt: 'Desktop Slide 2',
-                link: 'https://printo.ae/categories/print-products'
-            },
-            {
-                image: 'images/home/slider/slide3.jpg',
-                alt: 'Desktop Slide 3',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slide4.jpg',
-                alt: 'Desktop Slide 4',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slide5.jpg',
-                alt: 'Desktop Slide 5',
-                link: '#'
-            },
-            {
-                image: 'images/home/slider/slide6.jpg',
-                alt: 'Desktop Slide 6',
-                link: '#'
-            },
-            // Add more desktop slides as needed
-        ];
-    }
-
     var swiperWrapper = document.querySelector('.swiper-wrapper');
     swiperWrapper.innerHTML = ''; // Clear existing slides
 
@@ -207,8 +137,71 @@ function updateSlides() {
     });
 }
 
-// Initial update and event listener
-updateSlides();
+    const graphqlQuery = `
+        query getEvent($type: String!)
+        {
+            slidersbytype (type: $type)
+            {
+                id
+                title
+                link
+                product
+                {
+                    id
+                    title
+                    slug
+                    media
+                    {
+                        id
+                        name
+                        collection_name
+                        file_name
+                    }
+                }
+                media
+                {
+                    id
+                    name
+                    collection_name
+                    file_name
+                }
+            }
+        }
+    `;
+
+    const options =
+    {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: graphqlQuery, variables: {type: "home-page"} }),
+    };
+    
+    fetch('https://printo.ae/graphql', options)
+    .then((response) => response.json())
+    .then(
+        (data) =>
+        {
+            let slidersByType = data.data.slidersbytype;
+
+            slidersByType.forEach(
+                (slider) =>
+                {
+                    let slide =
+                    {
+                        image: 'https://printo.ae' + '/storage/' + slider.media[0].id + '/' + slider.media[0].file_name,
+                        alt: slider.title,
+                        link: slider.link,
+                    }
+
+                    slides.push(slide);
+                }
+            );
+
+            updateSlides();
+        }
+    )
+    .catch((error) => { console.error('Error:', error); });
+
 window.addEventListener('resize', updateSlides);
 </script>
 
